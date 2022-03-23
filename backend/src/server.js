@@ -15,12 +15,11 @@ app.use(express.json());
 let passengers = {};
 
 app.post("/pdf", async (request, response) => {
-  console.time("app");
   passengers = request.body;
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
 
-  await page.goto("http://localhost:3333/", {
+  await page.goto(`${request.protocol}://${request.get("host")}/`, {
     waitUntil: "networkidle0",
   });
 
@@ -42,22 +41,27 @@ app.post("/pdf", async (request, response) => {
 
 app.get("/", (request, response) => {
   const filePath = path.join(__dirname, "templates", "teste.ejs");
-  
-  ejs.renderFile(filePath, { clientName,
-    clientCPF,
-    clientRG,
-    clientUF,
-    clientBirthDate,
-    firstLawyer,
-    firstOAB,
-    secondLawyer,
-    secondOAB, } = passengers, (err, html) => {
-    if (err) {
-      return response.status(500).send("Erro na leitura do arquivo!");
+
+  ejs.renderFile(
+    filePath,
+    ({
+      clientName,
+      clientCPF,
+      clientRG,
+      clientUF,
+      clientBirthDate,
+      firstLawyer,
+      firstOAB,
+      secondLawyer,
+      secondOAB,
+    } = passengers),
+    (err, html) => {
+      if (err) {
+        return response.status(500).send("Erro na leitura do arquivo!");
+      }
+      return response.send(html);
     }
-    console.timeEnd("app");
-    return response.send(html);
-  });
+  );
 });
 
 app.listen(3333);
